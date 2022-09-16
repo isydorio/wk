@@ -1,0 +1,98 @@
+unit Unit1;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, IdContext, IdCustomHTTPServer,
+  IdBaseComponent, IdComponent, IdCustomTCPServer, IdHTTPServer, Vcl.StdCtrls, System.JSON,
+  IdHeaderList, IdGlobal, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.Phys.PG,
+  FireDAC.Phys.PGDef, FireDAC.VCLUI.Wait, Data.DB, FireDAC.Comp.Client;
+
+type
+  TForm1 = class(TForm)
+    IdHTTPServer1: TIdHTTPServer;
+    Memo1: TMemo;
+    FDConnection1: TFDConnection;
+    procedure IdHTTPServer1CommandGet(AContext: TIdContext;
+      ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
+    procedure IdHTTPServer1CreatePostStream(AContext: TIdContext;
+      AHeaders: TIdHeaderList; var VPostStream: TStream);
+    procedure IdHTTPServer1DoneWithPostStream(AContext: TIdContext;
+      ARequestInfo: TIdHTTPRequestInfo; var VCanFree: Boolean);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+function StreamToString(Stream: TStream): string;
+var
+  ms: TStringStream;
+begin
+  Result := '';
+  ms := TStringStream.Create;
+  try
+    ms.LoadFromStream(Stream);
+    SetString(Result, PChar(ms.memory), ms.Size);
+  finally
+    ms.Free;
+  end;
+end;
+
+procedure TForm1.IdHTTPServer1CommandGet(AContext: TIdContext;
+  ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
+  var
+   AForm : TStringList;
+   Obj: TJSONValue;
+   Stream : TStream;
+begin
+   if ARequestInfo.Command = 'POST' then
+      begin
+         Stream := ARequestInfo.PostStream;
+         if assigned(Stream) then
+            begin
+               Stream.Position := 0;
+               Obj := TJSONObject.ParseJSONValue(UTF8ToString(ReadStringFromStream(Stream, -1, IndyTextEncoding_OSDefault)));
+               TThread.Synchronize(nil,
+                 procedure
+                 begin
+                    memo1.Lines.Add(Obj.GetValue<string>('Teste'));
+                 end);
+
+            end
+      end
+   else
+      begin
+         AForm := TStringList.Create;
+         try
+            AForm.LoadFromFile('c:\debug\form.html');
+            AResponseInfo.ContentText := AForm.Text;
+         finally
+           AForm.Free
+         end;
+      end
+end;
+
+procedure TForm1.IdHTTPServer1CreatePostStream(AContext: TIdContext;
+  AHeaders: TIdHeaderList; var VPostStream: TStream);
+begin
+VPostStream := TMemoryStream.Create;
+end;
+
+procedure TForm1.IdHTTPServer1DoneWithPostStream(AContext: TIdContext;
+  ARequestInfo: TIdHTTPRequestInfo; var VCanFree: Boolean);
+begin
+VCanFree := false;
+end;
+
+end.

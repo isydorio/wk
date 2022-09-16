@@ -1,0 +1,34 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 369
+  ClientWidth = 594
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  PixelsPerInch = 96
+  TextHeight = 13
+  object RESTClient1: TRESTClient
+    BaseURL = 'http://viacep.com.br/ws/63046340/json'
+    Params = <>
+    Left = 48
+    Top = 96
+  end
+  object RESTRequest1: TRESTRequest
+    AssignedValues = [rvConnectTimeout, rvReadTimeout]
+    Client = RESTClient1
+    Params = <>
+    Response = RESTResponse1
+    Left = 120
+    Top = 96
+  end
+  object RESTResponse1: TRESTResponse
+    Left = 48
+    Top = 160
+  end
+end
